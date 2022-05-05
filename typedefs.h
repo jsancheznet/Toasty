@@ -16,6 +16,8 @@ typedef float    f32;
 typedef double   f64;
 typedef i32      b32;
 
+typedef uint32_t shader;
+
 #define INLINE __forceinline
 #include <assert.h>
 #define Assert(Expr) assert(Expr)

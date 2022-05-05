@@ -1,3 +1,4 @@
+
 @echo off
 
 REM TODO(Jorge): Make sure we compile with all libraries in release mode
@@ -10,10 +11,16 @@ set SDL_LIB="..\vendor\SDL2-2.0.22\lib\x64"
 set GLAD_INCLUDE="..\vendor\glad\include"
 set GLAD_SRC="..\vendor\glad\src"
 
+set GLM_INCLUDE="..\vendor\glm"
+
+set IMGUI_INCLUDE="..\vendor\imgui"
+
+set STB_INCLUDE="..\vendor\stb"
+
 REM set ASSIMP_INCLUDE="..\vendor\include"
 REM set ASSIMP_LIB="..\vendor\lib\assimp"
 
-set IncludeDirectories=-I%SDL_INCLUDE% -I%GLAD_INCLUDE% -I%GLAD_SRC%
+set IncludeDirectories=-I%SDL_INCLUDE% -I%GLAD_INCLUDE% -I%GLAD_SRC% -I%GLM_INCLUDE% -I%IMGUI_INCLUDE% -I%STB_INCLUDE%
 set LibDirectories=-LIBPATH:%SDL_LIB%
 
 REM set CompilerFlags= -DDEBUG -nologo -W4 -WX -Ot -FS %IncludeDirectories% -Zi -EHsc -MD /D "_WINDOWS"
