@@ -28,7 +28,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#define OPENGL_DEBUG_MODE 1
+#define OPENGL_DEBUG_MODE
 #include "typedefs.h"
 #include "helpers.cpp"
 #include "clock.cpp"
@@ -37,6 +37,7 @@
 #include "renderer.cpp"
 #include "camera.cpp"
 #include "texture.cpp"
+#include "model.cpp"
 
 window
 CreateOpenGLWindow(char *Title, i32 Width, i32 Height)
@@ -65,6 +66,12 @@ CreateOpenGLWindow(char *Title, i32 Width, i32 Height)
     Result.Context = SDL_GL_CreateContext(Result.Handle);
     if(!gladLoadGL()) { printf("gladLoadGL failed!\n"); }
     SDL_GL_MakeCurrent(Result.Handle, Result.Context);
+
+    i32 Flags; glGetIntegerv(GL_CONTEXT_FLAGS, &Flags);
+    if (Flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+    {
+        printf("OpenGL Debug Mode: Enabled\n");
+    }
 
     SDL_GL_SetSwapInterval(1); // Enable vsync
 
@@ -142,7 +149,7 @@ u32 CreateShader(char *Filename)
 
     // Compile Vertex Shader
     u32 VertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
-    char *VertexSource[2] = {"#version 330 core\n#define VERTEX_SHADER\n", SourceFile};
+    char *VertexSource[2] = {"#version 440 core\n#define VERTEX_SHADER\n", SourceFile};
     glShaderSource(VertexShaderObject, 2, VertexSource, NULL);
     glCompileShader(VertexShaderObject);
     i32 Compiled;
@@ -158,7 +165,7 @@ u32 CreateShader(char *Filename)
 
     // Compile Fragment Shader
     u32 FragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
-    char *FragmentSource[2] = {"#version 330 core\n#define FRAGMENT_SHADER\n", SourceFile};
+    char *FragmentSource[2] = {"#version 440 core\n#define FRAGMENT_SHADER\n", SourceFile};
     glShaderSource(FragmentShaderObject, 2, FragmentSource, NULL);
     glCompileShader(FragmentShaderObject);
     // i32 Compiled;
@@ -202,6 +209,12 @@ void ActivateShader(shader Shader)
     glUseProgram(Shader);
 }
 
+void BindTexture2D(u32 TextureUnit, u32 Handle)
+{
+    glActiveTexture(GL_TEXTURE0 + TextureUnit);
+    glBindTexture(GL_TEXTURE_2D, Handle);
+}
+
 int main(int Argc, char ** Argv)
 {
     Argc; Argv;
@@ -222,48 +235,40 @@ int main(int Argc, char ** Argv)
     mouse Mouse = CreateMouse(MouseSensitivity);
     camera MainCamera = CreateCamera(1280, 720, glm::vec3(0.0f, 0.0f, 1.5f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
+    model MyModel;
+    CreateModel("models/cube/cube.obj", &MyModel);
+
     texture TestingTexture = CreateTexture("images/test.png", TextureType_Null);
+    texture TestingTexture2 = CreateTexture("images/test2.jpg", TextureType_Null);
     shader MainShader = CreateShader("shaders/test.glsl");
-    u32 VBO, VAO, EBO;
-    {
-        f32 Vertices[] =
-        {
-            // positions          // colors           // texture coords
-            0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-            0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-            -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-            -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left
-        };
 
-        u32 Indices[] =
-        {
-            0, 1, 3, // first triangle
-            1, 2, 3  // second triangle
-        };
+    // TODO: Load the mesh textures and display them.
+    Here!;
 
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);
+    u32 CubeVAO, CubeVBO, CubeEBO;
+    glGenVertexArrays(1, &CubeVAO);
+    glGenBuffers(1, &CubeVBO);
+    glGenBuffers(1, &CubeEBO);
 
-        glBindVertexArray(VAO);
+    glBindVertexArray(CubeVAO);
 
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, CubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, MyModel.Meshes[0].Attributes.size() * sizeof(MyModel.Meshes[0].Attributes[0]), &MyModel.Meshes[0].Attributes[0], GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, CubeEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, MyModel.Meshes[0].Indices.size() *  sizeof(MyModel.Meshes[0].Indices[0]), &MyModel.Meshes[0].Indices[0], GL_STATIC_DRAW);
 
-        // position attribute
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void*)0);
-        glEnableVertexAttribArray(0);
-        // color attribute
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void*)(3 * sizeof(f32)));
-        glEnableVertexAttribArray(1);
-        // texture coord attribute
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void*)(6 * sizeof(f32)));
-        glEnableVertexAttribArray(2);
-    }
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void*)0);
+    glEnableVertexAttribArray(0);
+    // normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void*)(3 * sizeof(f32)));
+    glEnableVertexAttribArray(1);
+    // texture coord attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void*)(6 * sizeof(f32)));
+    glEnableVertexAttribArray(2);
 
+    BindTexture2D(0, TestingTexture.Handle);
 
     b32 Running = 1;
     while(Running)
@@ -273,22 +278,13 @@ int main(int Argc, char ** Argv)
         UpdateKeyboard(&Keyboard);
         UpdateMouse(&Mouse);
 
-        if(KeyIsPressed(&Keyboard, SDL_SCANCODE_S))
+        if(KeyIsPressed(&Keyboard, SDL_SCANCODE_Z))
         {
-            MainCamera.Position.z += 0.01f;
+            BindTexture2D(0, TestingTexture.Handle);
         }
-        if(KeyIsPressed(&Keyboard, SDL_SCANCODE_W))
+        if(KeyIsReleased(&Keyboard, SDL_SCANCODE_Z))
         {
-            MainCamera.Position.z -= 0.01f;
-        }
-
-        if(KeyIsPressed(&Keyboard, SDL_SCANCODE_A))
-        {
-            MainCamera.Position.x -= 0.01f;
-        }
-        if(KeyIsPressed(&Keyboard, SDL_SCANCODE_D))
-        {
-            MainCamera.Position.x += 0.01f;
+            BindTexture2D(0, TestingTexture2.Handle);
         }
 
         if(KeyIsPressed(&Keyboard, SDL_SCANCODE_LSHIFT))
@@ -296,13 +292,12 @@ int main(int Argc, char ** Argv)
             SDL_SetRelativeMouseMode(SDL_FALSE);
             SDL_ShowCursor(SDL_ENABLE);
         }
-        else if(KeyIsReleased(&Keyboard, SDL_SCANCODE_LSHIFT))
+        if(KeyIsNotPressed(&Keyboard, SDL_SCANCODE_LSHIFT))
         {
             SDL_SetRelativeMouseMode(SDL_TRUE);
-            SDL_ShowCursor(SDL_ENABLE);
+            SDL_ShowCursor(SDL_DISABLE);
+            UpdateCamera(&MainCamera, &Keyboard, &Mouse, MainClock.DeltaTime);
         }
-
-        UpdateCamera(&MainCamera, &Keyboard, &Mouse, MainClock.DeltaTime);
 
         RenderNewFrame(&Renderer, &MainCamera);
 
@@ -320,7 +315,7 @@ int main(int Argc, char ** Argv)
             if (ImGui::CollapsingHeader("Input"))
             {
                 // TODO: Mouse, Keyboard
-                ImGui::ColorEdit4("Background Color", glm::value_ptr(Renderer.BackgroundColor));
+                // ImGui::ColorEdit4("Background Color", glm::value_ptr(Renderer.BackgroundColor));
             }
 
             if(ImGui::CollapsingHeader("Camera controls"))
@@ -350,8 +345,10 @@ int main(int Argc, char ** Argv)
         ImGui::ShowDemoWindow();
 
         ActivateShader(MainShader);
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(CubeVAO);
+        glEnable(GL_CULL_FACE);
+        // glCullFace(GL_FRONT);
+        glDrawElements(GL_TRIANGLES, (GLsizei)MyModel.Meshes[0].Indices.size(), GL_UNSIGNED_INT, 0);
 
         RenderEndFrame(&Renderer);
     }
