@@ -2,6 +2,47 @@
 
 #include "model.h"
 
+void ExtractTexture(const aiMaterial *Material, std::string Path, texture_type TextureType, std::vector<texture> &Textures)
+{
+    // Assimp Reference: http://assimp.sourceforge.net/lib_html/material_8h.html#a7dd415ff703a2cc53d1c22ddbbd7dde0
+
+    aiString Filename;
+    aiTextureType AssimpType;
+
+    switch(TextureType)
+    {
+        case TextureType_Diffuse:
+        {
+            AssimpType = aiTextureType_DIFFUSE;
+        } break;
+
+        case TextureType_Ambient:
+        {
+            AssimpType = aiTextureType_SPECULAR;
+            break;
+        }
+
+        case TextureType_Specular:
+        {
+            AssimpType = aiTextureType_AMBIENT;
+            break;
+        }
+        default:
+        {
+            printf("ExtractTexture: TextureType is not specified, defaulting.\n");
+            AssimpType = aiTextureType_NONE;
+            break;
+        }
+    }
+
+    if(Material->GetTexture(AssimpType, 0, &Filename) == AI_SUCCESS)
+    {
+        std::string Filepath = Path + '/' + Filename.C_Str();
+        texture Texture = CreateTexture(Filepath.c_str(), TextureType);
+        Textures.push_back(Texture);
+    }
+}
+
 void ProcessMesh(const aiScene *Scene, const model *Model, const aiMesh *Mesh, std::vector<mesh> &Meshes)
 {
     mesh Result = {};
@@ -52,50 +93,11 @@ void ProcessMesh(const aiScene *Scene, const model *Model, const aiMesh *Mesh, s
         Material->Get(AI_MATKEY_REFRACTI, Result.Material.RefractionIndex); // Index of refraction, optical density
         Material->Get(AI_MATKEY_SHADING_MODEL, Result.Material.IlluminationModel); //
 
-        //
         // Load textures
-        //
-        // Assimp different texture types:
-        // http://assimp.sourceforge.net/lib_html/material_8h.html#a7dd415ff703a2cc53d1c22ddbbd7dde0
+        ExtractTexture(Material, Model->Path, TextureType_Diffuse, Result.Textures);
+        ExtractTexture(Material, Model->Path, TextureType_Specular, Result.Textures);
+        ExtractTexture(Material, Model->Path, TextureType_Ambient, Result.Textures);
 
-        aiString TextureFilename;
-        if(Material->GetTexture(aiTextureType_DIFFUSE, 0, &TextureFilename) == AI_SUCCESS)
-        {
-            std::string Filepath = Model->Path + '/' + TextureFilename.C_Str();
-            texture Texture = CreateTexture(Filepath.c_str(), TextureType_Diffuse);
-            Result.Textures.push_back(Texture);
-        }
-        else
-        {
-            printf("Material %s has no diffuse texture\n", TextureFilename.C_Str());
-        }
-
-        if(Material->GetTexture(aiTextureType_SPECULAR, 0, &TextureFilename) == AI_SUCCESS)
-        {
-            std::string Filepath = Model->Path + '/' + TextureFilename.C_Str();
-            texture Texture = CreateTexture(Filepath.c_str(), TextureType_Specular);
-            Result.Textures.push_back(Texture);
-        }
-        else
-        {
-            printf("Material %s has no specular texture\n", Result.Material.Name.c_str());
-        }
-
-        if(Material->GetTexture(aiTextureType_AMBIENT, 0, &TextureFilename) == AI_SUCCESS)
-        {
-            std::string Filepath = Model->Path + '/' + TextureFilename.C_Str();
-            texture Texture = CreateTexture(Filepath.c_str(), TextureType_Ambient);
-            Result.Textures.push_back(Texture);
-        }
-        else
-        {
-            printf("Material %s has no ambient texture\n", Result.Material.Name.c_str());
-        }
-
-    }
-    else
-    {
-        printf("Scene %s does not have materials\n", Scene->mName.C_Str());
     }
 
     Meshes.push_back(Result);

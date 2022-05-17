@@ -262,15 +262,15 @@ int main(int Argc, char ** Argv)
     renderer Renderer = CreateRenderer(Window);
     SetupDearImGui(&Window);
 
-    clock MainClock = CreateClock();
+    clock    MainClock = CreateClock();
     keyboard Keyboard = CreateKeyboard();
-    f32 MouseSensitivity = 5.0f;
-    mouse Mouse = CreateMouse(MouseSensitivity);
-    camera MainCamera = CreateCamera(1280, 720, glm::vec3(0.0f, 0.0f, 1.5f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    f32      MouseSensitivity = 5.0f;
+    mouse    Mouse = CreateMouse(MouseSensitivity);
+    camera   MainCamera = CreateCamera(1280, 720, glm::vec3(0.0f, 0.0f, 1.5f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     shader MainShader = CreateShader("shaders/test.glsl");
-    model MyModel = CreateModel("models/cube/cube.obj");
-    // model MyModel = CreateModel("models/teapot/teapot.obj");
+    // model MyModel = CreateModel("models/cube/cube.obj");
+    model MyModel = CreateModel("models/teapot/teapot.obj");
 
     b32 Running = 1;
     while(Running)
@@ -294,13 +294,18 @@ int main(int Argc, char ** Argv)
 
 
         { // Render things
+            // TODO(Jorge): Render using glBindVertexBuffer, glVertexAttribBinding, glVertexAttribFormat
+
             RenderNewFrame(&Renderer, &MainCamera);
             DrawGUI(Renderer, MainCamera);
-            SetUniform(MainShader, "Model", glm::mat4(1.0f));
+            glm::mat4 Model = glm::mat4(1.0f);
+            // Model = glm::scale(Model, glm::vec3(0.1f, 0.1f, 0.1f));
+            SetUniform(MainShader, "Model", Model);
             ActivateShader(MainShader);
-            // TODO(Jorge): Render using glBindVertexBuffer, glVertexAttribBinding, glVertexAttribFormat
+
             glBindVertexArray(MyModel.VAO);
             glEnable(GL_CULL_FACE);
+            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
             for(auto &Mesh : MyModel.Meshes)
             {
                 glBindBuffer(GL_ARRAY_BUFFER, Mesh.VBO);
