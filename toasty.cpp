@@ -215,6 +215,39 @@ void BindTexture2D(u32 TextureUnit, u32 Handle)
     glBindTexture(GL_TEXTURE_2D, Handle);
 }
 
+void DrawGUI(renderer &Renderer, camera &MainCamera)
+{
+    ImGui::Begin("Toasty Settings");
+
+    if (ImGui::CollapsingHeader("Renderer settings"))
+    {
+        ImGui::ColorEdit4("Background Color", glm::value_ptr(Renderer.BackgroundColor));
+    }
+
+    if (ImGui::CollapsingHeader("Input")) {}
+
+    if(ImGui::CollapsingHeader("Camera controls"))
+    {
+        ImGui::InputFloat3("Position", glm::value_ptr(MainCamera.Position));
+        ImGui::InputFloat3("Front", glm::value_ptr(MainCamera.Front));
+        ImGui::InputFloat3("Up", glm::value_ptr(MainCamera.Up));
+        ImGui::Text("Yaw: %3.3f", MainCamera.Yaw);
+    }
+    // ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+    // ImGui::Checkbox("Another Window", &show_another_window);
+    // ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+    // ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+    // if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+    //     counter++;
+    // ImGui::SameLine();
+    // ImGui::Text("counter = %d", counter);
+    // ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+    ImGui::End();
+
+    ImGui::ShowDemoWindow();
+}
+
 int main(int Argc, char ** Argv)
 {
     Argc; Argv;
@@ -235,40 +268,9 @@ int main(int Argc, char ** Argv)
     mouse Mouse = CreateMouse(MouseSensitivity);
     camera MainCamera = CreateCamera(1280, 720, glm::vec3(0.0f, 0.0f, 1.5f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-    model MyModel;
-    CreateModel("models/cube/cube.obj", &MyModel);
-
-    texture TestingTexture = CreateTexture("images/test.png", TextureType_Null);
-    texture TestingTexture2 = CreateTexture("images/test2.jpg", TextureType_Null);
     shader MainShader = CreateShader("shaders/test.glsl");
-
-    // TODO: Load the mesh textures and display them.
-    Here!;
-
-    u32 CubeVAO, CubeVBO, CubeEBO;
-    glGenVertexArrays(1, &CubeVAO);
-    glGenBuffers(1, &CubeVBO);
-    glGenBuffers(1, &CubeEBO);
-
-    glBindVertexArray(CubeVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, CubeVBO);
-    glBufferData(GL_ARRAY_BUFFER, MyModel.Meshes[0].Attributes.size() * sizeof(MyModel.Meshes[0].Attributes[0]), &MyModel.Meshes[0].Attributes[0], GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, CubeEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, MyModel.Meshes[0].Indices.size() *  sizeof(MyModel.Meshes[0].Indices[0]), &MyModel.Meshes[0].Indices[0], GL_STATIC_DRAW);
-
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void*)0);
-    glEnableVertexAttribArray(0);
-    // normal attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void*)(3 * sizeof(f32)));
-    glEnableVertexAttribArray(1);
-    // texture coord attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void*)(6 * sizeof(f32)));
-    glEnableVertexAttribArray(2);
-
-    BindTexture2D(0, TestingTexture.Handle);
+    model MyModel = CreateModel("models/cube/cube.obj");
+    // model MyModel = CreateModel("models/teapot/teapot.obj");
 
     b32 Running = 1;
     while(Running)
@@ -277,15 +279,6 @@ int main(int Argc, char ** Argv)
         ProcessEventQueue(&Running);
         UpdateKeyboard(&Keyboard);
         UpdateMouse(&Mouse);
-
-        if(KeyIsPressed(&Keyboard, SDL_SCANCODE_Z))
-        {
-            BindTexture2D(0, TestingTexture.Handle);
-        }
-        if(KeyIsReleased(&Keyboard, SDL_SCANCODE_Z))
-        {
-            BindTexture2D(0, TestingTexture2.Handle);
-        }
 
         if(KeyIsPressed(&Keyboard, SDL_SCANCODE_LSHIFT))
         {
@@ -299,58 +292,23 @@ int main(int Argc, char ** Argv)
             UpdateCamera(&MainCamera, &Keyboard, &Mouse, MainClock.DeltaTime);
         }
 
-        RenderNewFrame(&Renderer, &MainCamera);
 
-        // TODO: Render quad texture!
-        SetUniform(MainShader, "Model", glm::mat4(1.0f));
-
-        { // Dear ImGUI Window
-            ImGui::Begin("Toasty Settings");
-
-            if (ImGui::CollapsingHeader("Renderer settings"))
+        { // Render things
+            RenderNewFrame(&Renderer, &MainCamera);
+            DrawGUI(Renderer, MainCamera);
+            SetUniform(MainShader, "Model", glm::mat4(1.0f));
+            ActivateShader(MainShader);
+            // TODO(Jorge): Render using glBindVertexBuffer, glVertexAttribBinding, glVertexAttribFormat
+            glBindVertexArray(MyModel.VAO);
+            glEnable(GL_CULL_FACE);
+            for(auto &Mesh : MyModel.Meshes)
             {
-                ImGui::ColorEdit4("Background Color", glm::value_ptr(Renderer.BackgroundColor));
+                glBindBuffer(GL_ARRAY_BUFFER, Mesh.VBO);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Mesh.EBO);
+                glDrawElements(GL_TRIANGLES, (i32)Mesh.Indices.size(), GL_UNSIGNED_INT, 0);
             }
-
-            if (ImGui::CollapsingHeader("Input"))
-            {
-                // TODO: Mouse, Keyboard
-                // ImGui::ColorEdit4("Background Color", glm::value_ptr(Renderer.BackgroundColor));
-            }
-
-            if(ImGui::CollapsingHeader("Camera controls"))
-            {
-                ImGui::InputFloat3("Position", glm::value_ptr(MainCamera.Position));
-                ImGui::InputFloat3("Front", glm::value_ptr(MainCamera.Front));
-                ImGui::InputFloat3("Up", glm::value_ptr(MainCamera.Up));
-                ImGui::Text("Yaw: %3.3f", MainCamera.Yaw);
-
-                // TODO: Camera has only Yaw and pitch
-                // TODO: Camera Up is never updated
-            }
-            // ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            // ImGui::Checkbox("Another Window", &show_another_window);
-            // ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            // ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-            // if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-            //     counter++;
-            // ImGui::SameLine();
-            // ImGui::Text("counter = %d", counter);
-            // ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-            ImGui::Image((void*)(intptr_t)TestingTexture.Handle, ImVec2(100.0f, (float)100.0f));
-            ImGui::End();
+            RenderEndFrame(&Renderer);
         }
-
-        ImGui::ShowDemoWindow();
-
-        ActivateShader(MainShader);
-        glBindVertexArray(CubeVAO);
-        glEnable(GL_CULL_FACE);
-        // glCullFace(GL_FRONT);
-        glDrawElements(GL_TRIANGLES, (GLsizei)MyModel.Meshes[0].Indices.size(), GL_UNSIGNED_INT, 0);
-
-        RenderEndFrame(&Renderer);
     }
 
     // Cleanup

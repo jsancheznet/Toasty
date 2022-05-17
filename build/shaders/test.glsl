@@ -35,6 +35,7 @@ in vec2 FS_UV;
 out vec4 FragmentColor;
 
 uniform sampler2D DiffuseTexture;
+
 // TODO: Add the other texture types, make TextureType be the same
 // integer values as here. So we can use addition just like
 // learnopengl.com

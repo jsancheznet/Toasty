@@ -4,9 +4,13 @@
 
 enum texture_type
 {
+    // NOTE: Different texture types supported by assimp
+    // http://assimp.sourceforge.net/lib_html/material_8h.html#a7dd415ff703a2cc53d1c22ddbbd7dde0
     TextureType_Null,
     TextureType_Diffuse,
     TextureType_Specular,
+    TextureType_Ambient,
+    TextureType_Emissive,
 };
 
 // NOTE: Maybe i should drop every member in the texture struct and

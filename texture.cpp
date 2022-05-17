@@ -1,11 +1,11 @@
 #pragma once
 
+#include <string>
+
 #include "texture.h"
 
-texture CreateTexture(const char *Filename, texture_type TextureType = TextureType_Null)
+texture CreateTexture(std::string Filename, texture_type TextureType = TextureType_Null)
 {
-    Assert(Filename);
-
     texture Result = {};
 
     Result.Type = TextureType;
@@ -13,7 +13,7 @@ texture CreateTexture(const char *Filename, texture_type TextureType = TextureTy
     i32 RequestedChannelCount = 0;
     i32 FlipVertically = 1;
     stbi_set_flip_vertically_on_load(FlipVertically);
-    u8 *Data = stbi_load(Filename, &Result.Width, &Result.Height, &Result.ChannelCount, RequestedChannelCount);
+    u8 *Data = stbi_load(Filename.c_str(), &Result.Width, &Result.Height, &Result.ChannelCount, RequestedChannelCount);
     if(Data)
     {
         glGenTextures(1, &Result.Handle);
@@ -38,7 +38,7 @@ texture CreateTexture(const char *Filename, texture_type TextureType = TextureTy
         }
         else
         {
-            fprintf(stderr, "%s Texture format is not GL_RGB or GL_RGBA\n", Filename);
+            fprintf(stderr, "%s Texture format is not GL_RGB or GL_RGBA\n", Filename.c_str());
             stbi_image_free(Data);
             Result.Type = TextureType_Null;
         }
@@ -56,7 +56,7 @@ texture CreateTexture(const char *Filename, texture_type TextureType = TextureTy
     }
     else
     {
-        printf("Could not load image file: %s\n", Filename);
+        printf("Could not load image file: %s\n", Filename.c_str());
         Result.Type = TextureType_Null;
     }
 
