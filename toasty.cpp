@@ -108,7 +108,7 @@ void ProcessEventQueue(b32 *Running)
     SDL_Event Event;
     while (SDL_PollEvent(&Event))
     {
-        ImGui_ImplSDL2_ProcessEvent(&Event);
+        // ImGui_ImplSDL2_ProcessEvent(&Event);
 
         switch (Event.type)
         {
@@ -215,9 +215,36 @@ void BindTexture2D(u32 TextureUnit, u32 Handle)
     glBindTexture(GL_TEXTURE_2D, Handle);
 }
 
-void DrawGUI(renderer &Renderer, camera &MainCamera)
+#if 0
+void GUI_Model(model &Model)
 {
+    if (ImGui::CollapsingHeader(Model.Name.c_str()))
+    {
+        ImGui::Text("VAO: %d", Model.VAO);
+        ImGui::Text("Working Directory: %s", Model.Path.c_str());
+        ImGui::Text("Mesh Count: %d", Model.Meshes.size());
+
+        for(mesh &Mesh : Model.Meshes)
+        {
+            if (ImGui::TreeNode(Mesh.Name.c_str()))
+            {
+                ImGui::Text("VBO: %d", Mesh.VBO);
+                ImGui::Text("EBO: %d", Mesh.EBO);
+                ImGui::Text("Attribute Count: %d", Mesh.Attributes.size());
+                ImGui::Text("Index Count: %d", Mesh.Indices.size());
+            }
+        }
+    }
+}
+#endif
+
+void DrawGUI(renderer &Renderer, camera &MainCamera, model &Model)
+{
+    Model;
+
     ImGui::Begin("Toasty Settings");
+
+    // GUI_Model(Model);
 
     if (ImGui::CollapsingHeader("Renderer settings"))
     {
@@ -260,7 +287,8 @@ int main(int Argc, char ** Argv)
     i32 Height = 720;
     window Window = CreateOpenGLWindow("Toasty!", Width, Height);
     renderer Renderer = CreateRenderer(Window);
-    SetupDearImGui(&Window);
+
+    // SetupDearImGui(&Window);
 
     clock    MainClock = CreateClock();
     keyboard Keyboard = CreateKeyboard();
@@ -269,8 +297,12 @@ int main(int Argc, char ** Argv)
     camera   MainCamera = CreateCamera(1280, 720, glm::vec3(0.0f, 0.0f, 1.5f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     shader MainShader = CreateShader("shaders/test.glsl");
+
     // model MyModel = CreateModel("models/cube/cube.obj");
     model MyModel = CreateModel("models/teapot/teapot.obj");
+    // model MyModel = CreateModel("models/sphere.obj");
+    // model MyModel = CreateModel("models/holodeck/holodeck.obj");
+    // model MyModel = CreateModel("models/mori_knob/testObj.obj");
 
     b32 Running = 1;
     while(Running)
@@ -280,46 +312,82 @@ int main(int Argc, char ** Argv)
         UpdateKeyboard(&Keyboard);
         UpdateMouse(&Mouse);
 
-        if(KeyIsPressed(&Keyboard, SDL_SCANCODE_LSHIFT))
-        {
-            SDL_SetRelativeMouseMode(SDL_FALSE);
-            SDL_ShowCursor(SDL_ENABLE);
-        }
         if(KeyIsNotPressed(&Keyboard, SDL_SCANCODE_LSHIFT))
         {
             SDL_SetRelativeMouseMode(SDL_TRUE);
             SDL_ShowCursor(SDL_DISABLE);
             UpdateCamera(&MainCamera, &Keyboard, &Mouse, MainClock.DeltaTime);
         }
-
+        else
+        {
+            SDL_SetRelativeMouseMode(SDL_FALSE);
+            SDL_ShowCursor(SDL_ENABLE);
+        }
 
         { // Render things
+
             // TODO(Jorge): Render using glBindVertexBuffer, glVertexAttribBinding, glVertexAttribFormat
 
             RenderNewFrame(&Renderer, &MainCamera);
-            DrawGUI(Renderer, MainCamera);
+
             glm::mat4 Model = glm::mat4(1.0f);
-            // Model = glm::scale(Model, glm::vec3(0.1f, 0.1f, 0.1f));
+            Model = glm::scale(Model, glm::vec3(0.05f, 0.05f, 0.05f));
             SetUniform(MainShader, "Model", Model);
             ActivateShader(MainShader);
 
-            glBindVertexArray(MyModel.VAO);
-            glEnable(GL_CULL_FACE);
-            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
             for(auto &Mesh : MyModel.Meshes)
             {
+                glBindVertexArray(Mesh.VAO);
                 glBindBuffer(GL_ARRAY_BUFFER, Mesh.VBO);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Mesh.EBO);
+
+                for(auto &Texture : Mesh.Textures)
+                {
+                    if(Texture.Type == TextureType_Diffuse)
+                    {
+                        BindTexture2D(0, Texture.Handle);
+                    }
+                    else
+                    {
+                        switch(Texture.Type)
+                        {
+                            case TextureType_Null:
+                            {
+                                printf("Texture Not Binded: %s, Type: TextureType_Null\n", Texture.Filename.c_str());
+                            } break;
+                            case TextureType_Specular:
+                            {
+                                printf("Texture Not Binded: %s, Type: TextureType_Specular\n", Texture.Filename.c_str());
+                            } break;
+                            case TextureType_Ambient:
+                            {
+                                printf("Texture Not Binded: %s, Type: TextureType_Ambient\n", Texture.Filename.c_str());
+                            } break;
+                            case TextureType_Emissive:
+                            {
+                                printf("Texture Not Binded: %s, Type: TextureType_Emissive\n", Texture.Filename.c_str());
+                            } break;
+                            default:
+                            {
+                                printf("Texture Not Binded: %s, Type: NO_TYPE_EXISTS \n", Texture.Filename.c_str());
+                            } break;
+                        }
+                    }
+                }
+
                 glDrawElements(GL_TRIANGLES, (i32)Mesh.Indices.size(), GL_UNSIGNED_INT, 0);
             }
+
+            // DrawGUI(Renderer, MainCamera, MyModel);
+
             RenderEndFrame(&Renderer);
         }
     }
 
     // Cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
+    // ImGui_ImplOpenGL3_Shutdown();
+    // ImGui_ImplSDL2_Shutdown();
+    // ImGui::DestroyContext();
 
     SDL_GL_DeleteContext(Window.Context);
     SDL_DestroyWindow(Window.Handle);

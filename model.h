@@ -31,6 +31,7 @@ struct material
 
 struct mesh
 {
+    u32 VAO;
     u32 VBO;
     u32 EBO;
 
@@ -43,7 +44,6 @@ struct mesh
 
 struct model
 {
-    u32 VAO;
     std::string Name;
     std::vector<mesh> Meshes;
     std::string Path;

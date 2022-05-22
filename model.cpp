@@ -94,9 +94,9 @@ void ProcessMesh(const aiScene *Scene, const model *Model, const aiMesh *Mesh, s
         Material->Get(AI_MATKEY_SHADING_MODEL, Result.Material.IlluminationModel); //
 
         // Load textures
-        ExtractTexture(Material, Model->Path, TextureType_Diffuse, Result.Textures);
+        ExtractTexture(Material, Model->Path, TextureType_Diffuse,  Result.Textures);
         ExtractTexture(Material, Model->Path, TextureType_Specular, Result.Textures);
-        ExtractTexture(Material, Model->Path, TextureType_Ambient, Result.Textures);
+        ExtractTexture(Material, Model->Path, TextureType_Ambient,  Result.Textures);
 
     }
 
@@ -130,13 +130,13 @@ void ProcessNode(const aiScene *Scene, model *Model, const aiNode *Node)
     }
 }
 
-void UploadToGPU(model *Model)
+void UploadModel(model *Model)
 {
-    glGenVertexArrays(1, &Model->VAO);
-    glBindVertexArray(Model->VAO);
-
     for(auto &Mesh : Model->Meshes)
     {
+        glGenVertexArrays(1, &Mesh.VAO);
+        glBindVertexArray(Mesh.VAO);
+
         glGenBuffers(1, &Mesh.VBO);
         glGenBuffers(1, &Mesh.EBO);
 
@@ -155,9 +155,10 @@ void UploadToGPU(model *Model)
         // texture coord attribute
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), (void*)(6 * sizeof(f32)));
         glEnableVertexAttribArray(2);
+
+        glBindVertexArray(0);
     }
 
-    glBindVertexArray(0);
 }
 
 model CreateModel(std::string Filename)
@@ -168,7 +169,8 @@ model CreateModel(std::string Filename)
     Result.Path = Filename.substr(0, Filename.find_last_of('/'));
 
     Assimp::Importer Importer;
-    const aiScene* Scene = Importer.ReadFile(Filename, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_GenNormals);
+    // const aiScene* Scene = Importer.ReadFile(Filename, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcess_GenNormals);
+    const aiScene* Scene = Importer.ReadFile(Filename, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals);
     if (Scene == nullptr)
     {
         printf("%s\n", Importer.GetErrorString());
@@ -179,7 +181,7 @@ model CreateModel(std::string Filename)
     ProcessNode(Scene, &Result, Scene->mRootNode);
 
     // Upload everything to GPU
-    UploadToGPU(&Result);
+    UploadModel(&Result);
 
     return Result;
 }

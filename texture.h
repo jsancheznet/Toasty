@@ -2,6 +2,8 @@
 
 #include "typedefs.h"
 
+#include <string>
+
 enum texture_type
 {
     // NOTE: Different texture types supported by assimp
@@ -19,6 +21,7 @@ enum texture_type
 struct texture
 {
     texture_type Type;
+    std::string Filename;
 
     u32 Handle;
     i32 Width;

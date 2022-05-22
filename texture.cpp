@@ -8,6 +8,8 @@ texture CreateTexture(std::string Filename, texture_type TextureType = TextureTy
 {
     texture Result = {};
 
+    Result.Filename = Filename;
+
     Result.Type = TextureType;
 
     i32 RequestedChannelCount = 0;

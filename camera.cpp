@@ -80,7 +80,11 @@ void UpdateCamera(camera *Camera, keyboard *Keyboard, mouse *Mouse, f64 DeltaTim
     }
     if (KeyIsPressed(Keyboard, SDL_SCANCODE_SPACE))
     {
-        // TODO: Reset camera position
+        Camera->Position.y += FrameSpeed;
+    }
+    if (KeyIsPressed(Keyboard, SDL_SCANCODE_LCTRL))
+    {
+        Camera->Position.y -= FrameSpeed;
     }
 
     // Update Camera's view matrix
