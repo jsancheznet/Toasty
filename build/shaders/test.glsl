@@ -8,8 +8,6 @@ out vec3 FS_Normal;
 out vec2 FS_UV;
 
 uniform mat4 Model;
-// uniform mat4 View;
-// uniform mat4 Projection;
 
 layout (std140, binding = 0) uniform CameraMatrices
 {

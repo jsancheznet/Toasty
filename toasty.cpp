@@ -1,3 +1,9 @@
+/*
+  Todo List
+
+   - Arcball Camera: https://asliceofrendering.com/camera/2019/11/30/ArcballCamera/
+ */
+
 #include <stdio.h>
 
 #include <SDL.h>
@@ -294,7 +300,7 @@ int main(int Argc, char ** Argv)
     keyboard Keyboard = CreateKeyboard();
     f32      MouseSensitivity = 5.0f;
     mouse    Mouse = CreateMouse(MouseSensitivity);
-    camera   MainCamera = CreateCamera(1280, 720, glm::vec3(0.0f, 0.0f, 1.5f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    camera   MainCamera = CreateCamera(1280, 720, glm::vec3(0.0f, 0.0f, 5.5f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     shader MainShader = CreateShader("shaders/test.glsl");
 

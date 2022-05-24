@@ -4,7 +4,6 @@
 #include "renderer.h"
 #include "camera.h"
 
-
 void UploadCameraMatrices(u32 MatricesUBO, glm::mat4 *Perspective, glm::mat4 *Orthographic, glm::mat4 *View)
 {
     Assert(Perspective);
@@ -51,6 +50,9 @@ CreateRenderer(window Window)
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 
+
+    glEnable(GL_DEPTH_TEST);
+
     return Result;
 }
 
@@ -71,11 +73,9 @@ void RendererDearImGui_EndFrame()
 
 void RenderNewFrame(renderer *Renderer, camera *Camera)
 {
-    Renderer; // NOTE: Delete me once we use the Renderer variable for anything
-
     // CornflowerBlue 100, 149, 237
     glClearColor(Renderer->BackgroundColor.r, Renderer->BackgroundColor.g, Renderer->BackgroundColor.b, Renderer->BackgroundColor.a);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     RendererDearImGui_BeginFrame();
 
     UploadCameraMatrices(Renderer->MatricesUBO, &Camera->Perspective, &Camera->Orthographic, &Camera->View);
