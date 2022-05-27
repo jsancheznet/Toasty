@@ -1,6 +1,7 @@
 /*
   Todo List
 
+   - Infinite Grid: http://asliceofrendering.com/page2/
    - Arcball Camera: https://asliceofrendering.com/camera/2019/11/30/ArcballCamera/
  */
 
@@ -305,9 +306,9 @@ int main(int Argc, char ** Argv)
     shader MainShader = CreateShader("shaders/test.glsl");
 
     // model MyModel = CreateModel("models/cube/cube.obj");
-    model MyModel = CreateModel("models/teapot/teapot.obj");
+    // model MyModel = CreateModel("models/teapot/teapot.obj");
     // model MyModel = CreateModel("models/sphere.obj");
-    // model MyModel = CreateModel("models/holodeck/holodeck.obj");
+    model MyModel = CreateModel("models/holodeck/holodeck.obj");
     // model MyModel = CreateModel("models/mori_knob/testObj.obj");
 
     b32 Running = 1;
@@ -340,6 +341,9 @@ int main(int Argc, char ** Argv)
             Model = glm::scale(Model, glm::vec3(0.05f, 0.05f, 0.05f));
             SetUniform(MainShader, "Model", Model);
             ActivateShader(MainShader);
+
+            EnableWireframeMode();
+            DisableWireframeMode();
 
             for(auto &Mesh : MyModel.Meshes)
             {
