@@ -20,11 +20,12 @@ set STB_INCLUDE="..\vendor\stb"
 set ASSIMP_INCLUDE="..\vendor\assimp\include"
 set ASSIMP_LIB="..\vendor\assimp\lib\assimp"
 
+
+
 set IncludeDirectories=-I%SDL_INCLUDE% -I%GLAD_INCLUDE% -I%GLAD_SRC% -I%GLM_INCLUDE% -I%IMGUI_INCLUDE% -I%STB_INCLUDE% -I%ASSIMP_INCLUDE%
 set LibDirectories=-LIBPATH:%SDL_LIB% -LIBPATH:%ASSIMP_LIB%
 
-REM set CompilerFlags= -DDEBUG -nologo -W4 -WX -Ot -FS %IncludeDirectories% -Zi -EHsc -MD /D "_WINDOWS"
-set CompilerFlags= -nologo -W4 -WX -Od -FS %IncludeDirectories% -Zi -EHsc -MD /D "_WINDOWS"
+set CompilerFlags= -nologo -W4 -WX -Od -FS /Fm %IncludeDirectories% -Zi -EHsc -MD /D "_WINDOWS"
 set LinkerFlags=-nologo -DEBUG %LibDirectories%
 
 cl ..\toasty.cpp %CompilerFlags% /link %LinkerFlags% -SUBSYSTEM:CONSOLE SDL2.lib SDL2main.lib shell32.lib assimp-vc142-mt.lib
